@@ -16,6 +16,10 @@ android {
     if (file("release.properties").exists()) {
     }
     buildTypes {
+        debug {
+            applicationIdSuffix ".split"
+            versionNameSuffix "-split"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -42,6 +46,14 @@ android {
     }
     buildFeatures {
         aidl true
+    }
+
+    applicationVariants.configureEach { variant ->
+        if (variant.buildType.name == "debug") {
+            variant.outputs.configureEach {
+                outputFileName = "openconnect-split-debug.apk"
+            }
+        }
     }
 }
 

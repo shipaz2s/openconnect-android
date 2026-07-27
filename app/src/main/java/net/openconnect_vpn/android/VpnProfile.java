@@ -27,12 +27,19 @@
 package net.openconnect_vpn.android;
 
 import java.util.Locale;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import android.content.SharedPreferences;
 
 public class VpnProfile implements Comparable<VpnProfile> {
     public static final String INLINE_TAG = "[[INLINE]]";
+    public static final String PREF_APP_ROUTING_ALLOWLIST_ENABLED =
+            "app_routing_allowlist_enabled";
+    public static final String PREF_APP_ROUTING_PACKAGES =
+            "app_routing_packages";
 
     public SharedPreferences mPrefs;
     public String mName;
@@ -92,13 +99,26 @@ public class VpnProfile implements Comparable<VpnProfile> {
         return mUuid.toString();
     }
 
+    public boolean isAppRoutingAllowlistEnabled() {
+        return mPrefs != null && mPrefs.getBoolean(
+                PREF_APP_ROUTING_ALLOWLIST_ENABLED, false);
+    }
+
+    public Set<String> getAppRoutingPackages() {
+        if (mPrefs == null) {
+            return Collections.emptySet();
+        }
+        Set<String> packages = mPrefs.getStringSet(
+                PREF_APP_ROUTING_PACKAGES, Collections.<String>emptySet());
+        return Collections.unmodifiableSet(new HashSet<String>(packages));
+    }
+
 	@Override
 	public int compareTo(VpnProfile arg0) {
 		Locale def = Locale.getDefault();
 		return getName().toUpperCase(def).compareTo(arg0.getName().toUpperCase(def));
 	}
 }
-
 
 
 

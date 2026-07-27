@@ -89,8 +89,9 @@ public class SendDumpFragment extends Fragment  {
 			OpenVPN.logError("No Minidump found!");
 		}
 
-		uris.add(Uri.parse("content://net.openconnect_vpn.android.FileProvider/" + ldump.getName()));
-		uris.add(Uri.parse("content://net.openconnect_vpn.android.FileProvider/" + ldump.getName() + ".log"));
+		String providerAuthority = getActivity().getPackageName() + ".FileProvider";
+		uris.add(Uri.parse("content://" + providerAuthority + "/" + ldump.getName()));
+		uris.add(Uri.parse("content://" + providerAuthority + "/" + ldump.getName() + ".log"));
 
 		emailIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 		emailIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);

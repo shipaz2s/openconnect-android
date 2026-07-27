@@ -79,6 +79,8 @@ $(INSTALL_ARCH_TARGETS) : install-arch-% : arch-%
 	cp $*/libstoken.so $(JNI_DIR)/$(NDK_ARCH_$*)/
 	mkdir -p $(BIN_DIR)/$(NDK_ARCH_$*)
 	cp $*/curl $(BIN_DIR)/$(NDK_ARCH_$*)/curl-bin
+	cp $*/openconnect/android/$(TRIPLET_$*)/out/sbin/run_pie \
+		$(BIN_DIR)/$(NDK_ARCH_$*)/run_pie
 
 .PHONY: $(ARCH_TARGETS)
 $(ARCH_TARGETS) : arch-% : %/libopenconnect.so %/curl %/libstoken.so
@@ -94,6 +96,7 @@ $(ARCH_CURL_TARGETS) : %/curl : %/sysroot curl/configure
 		$(call set_build_env,$*) $(TOPDIR)/curl/configure \
 			--prefix=/ --host=$(TRIPLET_$*) --disable-shared \
 			--enable-static --with-gnutls --without-libpsl \
+			--disable-docs --disable-manual \
 			CFLAGS="$(CFLAGS_$*) -fvisibility=default -fPIE" \
 			LDFLAGS="-rdynamic -fPIE -pie" \
 			LIBS="$(shell $(call pkg_config,$*) --static --libs gnutls)"

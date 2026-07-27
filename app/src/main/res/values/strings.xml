@@ -143,6 +143,14 @@
     <string name="split_tunnel_mode">Split tunnel mode</string>
     <string name="split_tunnel_networks">Split tunnel networks</string>
     <string name="split_tunnel_networks_message">Enter a comma-separated list of subnets to route over the VPN link.  Example:\n\n192.168.22.0/24, 10.15.0.0/16</string>
+    <string name="app_routing_only_selected">Only selected applications</string>
+    <string name="app_routing_only_selected_summary">Route only selected applications through this VPN. Reconnect to apply changes.</string>
+    <string name="app_routing_select_apps">Select applications</string>
+    <string name="app_routing_selected_count">%1$d applications selected</string>
+    <string name="app_routing_search_hint">Search applications</string>
+    <string name="app_routing_missing">Not installed</string>
+    <string name="app_routing_empty_error">Select at least one installed application before connecting.</string>
+    <string name="app_routing_no_installed_error">None of the selected applications are installed.</string>
     <string name="timestamp_format">Log timestamp format</string>
     <string name="timestamp_short">Time only</string>
     <string name="timestamp_long">Date + time</string>

@@ -110,6 +110,14 @@
   <string name="split_tunnel_mode">Режим split tunnel</string>
   <string name="split_tunnel_networks">Сети split tunnel</string>
   <string name="split_tunnel_networks_message">Введите список подсетей которые нужно маршрутизировать через VPN.  Пример: 192.168.22.0/24, 10.15.0.0/16</string>
+  <string name="app_routing_only_selected">Только выбранные приложения</string>
+  <string name="app_routing_only_selected_summary">Направлять через VPN только выбранные приложения. Для применения переподключитесь.</string>
+  <string name="app_routing_select_apps">Выбрать приложения</string>
+  <string name="app_routing_selected_count">Выбрано приложений: %1$d</string>
+  <string name="app_routing_search_hint">Поиск приложений</string>
+  <string name="app_routing_missing">Не установлено</string>
+  <string name="app_routing_empty_error">Перед подключением выберите хотя бы одно установленное приложение.</string>
+  <string name="app_routing_no_installed_error">Ни одно из выбранных приложений не установлено.</string>
   <string name="state_connected_to">Подключено к %1$s</string>
   <string name="status">Статус</string>
   <string name="statusline_bytecount">↓%2$s/s %1$s - ↑%4$s/s %3$s</string>
