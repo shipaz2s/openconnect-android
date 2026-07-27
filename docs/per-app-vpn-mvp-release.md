@@ -2,6 +2,16 @@
 
 Status: ready for integration into `main`.
 
+Release identifier: `v1.12-split-mvp1`
+
+Release artifact: `openconnect-split-1.12-mvp1.apk`
+
+SHA-256:
+`51d5e13548169fff439ed1cfa7b5a312317cdfb87c317a08db7e8952df2ed1b7`
+
+Signing certificate SHA-256:
+`bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b23b599cabf0169`
+
 ## Included functionality
 
 - Per-profile `Only selected applications` mode.

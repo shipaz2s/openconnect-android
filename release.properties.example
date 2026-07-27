@@ -1,0 +1,6 @@
+# Copy this file to release.properties and fill in the passwords locally.
+# Never commit release.properties or the keystore.
+storeFile=release.keystore
+storePassword=CHANGE_ME
+keyAlias=openconnect-split
+keyPassword=CHANGE_ME

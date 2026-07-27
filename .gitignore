@@ -12,6 +12,13 @@
 .classpath
 .project
 
+# Release signing credentials (keep backed up outside the repository)
+/release.keystore
+/release.properties
+/.release.properties.*
+/release.properties~
+*.jks
+
 *.jar
 *.so
 

@@ -103,6 +103,22 @@ Run the standard verification sequence with:
 scripts/verify.sh
 ```
 
+### Signed release APK
+
+Release builds use a project-local keystore and an ignored
+`release.properties` file. Create the keystore once, keep an external backup,
+then copy `release.properties.example` to `release.properties` and fill in the
+four signing values. Neither file containing secrets may be committed.
+
+Build and verify the signed release APK with:
+
+```sh
+scripts/build-release.sh
+```
+
+The resulting APK is written to
+`app/build/outputs/apk/release/openconnect-split-1.12-mvp1.apk`.
+
 Do not commit `.devtools/`, `local.properties`, downloaded SDK components,
 Gradle caches, APK/AAB files, or signing credentials. The native libraries,
 the standalone curl executable, and Java wrapper JARs are generated locally

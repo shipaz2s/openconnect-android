@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+def releasePropertiesFile = rootProject.file("release.properties")
+def releaseProperties = new Properties()
+if (releasePropertiesFile.exists()) {
+    releasePropertiesFile.withInputStream { releaseProperties.load(it) }
+}
+
 android {
     namespace "net.openconnect_vpn.android"
     defaultConfig {
@@ -9,21 +15,30 @@ android {
         targetSdk 34
         compileSdk 35
 
-        versionCode 1120
-        versionName "1.12"
+        versionCode 1121
+        versionName "1.12-split-mvp1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
-    if (file("release.properties").exists()) {
+    signingConfigs {
+        if (releasePropertiesFile.exists()) {
+            release {
+                storeFile rootProject.file(releaseProperties["storeFile"])
+                storePassword releaseProperties["storePassword"]
+                keyAlias releaseProperties["keyAlias"]
+                keyPassword releaseProperties["keyPassword"]
+            }
+        }
     }
     buildTypes {
         debug {
             applicationIdSuffix ".split"
-            versionNameSuffix "-split"
+            versionNameSuffix "-debug"
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (file("release.properties").exists()) {
+            if (releasePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
             }
         }
     }
@@ -49,9 +64,11 @@ android {
     }
 
     applicationVariants.configureEach { variant ->
-        if (variant.buildType.name == "debug") {
-            variant.outputs.configureEach {
+        variant.outputs.configureEach {
+            if (variant.buildType.name == "debug") {
                 outputFileName = "openconnect-split-debug.apk"
+            } else if (variant.buildType.name == "release") {
+                outputFileName = "openconnect-split-1.12-mvp1.apk"
             }
         }
     }
