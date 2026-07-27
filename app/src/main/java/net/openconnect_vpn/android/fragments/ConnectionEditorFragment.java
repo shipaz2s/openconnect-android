@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.openconnect_vpn.android.ConnectionEditorActivity;
+import net.openconnect_vpn.android.AppSelectionActivity;
 import net.openconnect_vpn.android.R;
 import net.openconnect_vpn.android.ShowTextPreference;
 import net.openconnect_vpn.android.TokenImportActivity;
@@ -90,10 +91,11 @@ public class ConnectionEditorFragment extends PreferenceFragment
     }
 
     @Override
-	public void onResume() {
+    public void onResume() {
         super.onResume();
         getPreferenceScreen().getSharedPreferences()
                 .registerOnSharedPreferenceChangeListener(this);
+        updateAppRoutingSummary();
     }
 
     @Override
@@ -239,7 +241,27 @@ public class ConnectionEditorFragment extends PreferenceFragment
 		} else {
 			getPreferenceScreen().removePreference(p);
 		}
+
+        p = findPreference("app_routing_packages_selector");
+        p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                Intent intent = new Intent(getActivity(), AppSelectionActivity.class);
+                intent.putExtra(AppSelectionActivity.EXTRA_UUID, mUUID);
+                startActivity(intent);
+                return true;
+            }
+        });
 	}
+
+    private void updateAppRoutingSummary() {
+        Preference preference = findPreference("app_routing_packages_selector");
+        if (preference == null || mProfile == null) {
+            return;
+        }
+        int count = mProfile.getAppRoutingPackages().size();
+        preference.setSummary(getString(R.string.app_routing_selected_count, count));
+    }
 
 	@Override
 	public void onActivityResult(int idx, int resultCode, Intent data) {

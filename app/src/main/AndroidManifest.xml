@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <!-- Copy the <permission> block to your app when using the REMOTE API. Otherwise OpenConnect
         needs to be installed first -->
 <!--    <permission-->
@@ -31,6 +38,9 @@
         android:theme="@android:style/Theme.Material">
         <activity
             android:name=".ConnectionEditorActivity" />
+        <activity
+            android:name=".AppSelectionActivity"
+            android:label="@string/app_routing_select_apps" />
         <activity
             android:name=".FragActivity" />
         <activity

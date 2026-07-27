@@ -113,6 +113,15 @@
             android:dialogMessage="@string/split_tunnel_networks_message"
             android:inputType="textUri|textMultiLine"
             android:defaultValue="" />
+        <CheckBoxPreference
+            android:key="app_routing_allowlist_enabled"
+            android:title="@string/app_routing_only_selected"
+            android:summary="@string/app_routing_only_selected_summary"
+            android:defaultValue="false" />
+        <Preference
+            android:key="app_routing_packages_selector"
+            android:title="@string/app_routing_select_apps"
+            android:dependency="app_routing_allowlist_enabled" />
         <EditTextPreference
             android:defaultValue=""
             android:dialogMessage="@string/sni_hint"
