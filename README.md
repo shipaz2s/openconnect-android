@@ -49,8 +49,15 @@ The Android application build requires:
 * SDK packages `"platform-tools"`, `"build-tools;34.0.0"`, and
   `"platforms;android-35"`;
 * NDK r27c when rebuilding native dependencies;
-* a recent Apache Ant when rebuilding Java parts of the native dependencies;
-* host-side `git`, `gcc`, `make`, `autoconf`, `automake`, and `libtool`.
+* host-side `git`, `gcc`, `make`, `autoconf`, `automake`, `libtool`,
+  `pkg-config`, `autopoint`, `gettext`, `bison`, and `flex`.
+
+On Debian or Ubuntu, install the host-side build tools with:
+
+```sh
+sudo apt install autoconf automake autopoint bison build-essential flex \
+    gettext libtool pkg-config
+```
 
 `ANDROID_HOME` must point to the Android SDK. `JAVA_HOME` must point to JDK 17.
 The SDK's `platform-tools` and `cmdline-tools/latest/bin` directories must be
@@ -66,6 +73,7 @@ development setup for this repository keeps downloaded tools under the ignored
 .devtools/
 ├── jdk-17/
 ├── android-sdk/
+│   └── ndk/27.2.12479018/
 └── gradle-home/
 ```
 
@@ -77,6 +85,7 @@ export JAVA_HOME="$PWD/.devtools/jdk-17"
 export ANDROID_HOME="$PWD/.devtools/android-sdk"
 export GRADLE_USER_HOME="$PWD/.devtools/gradle-home"
 export ANDROID_USER_HOME="$PWD/.devtools/android-user-home"
+export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
 ```
 
@@ -85,7 +94,7 @@ Bootstrap and activate this local environment with:
 ```sh
 scripts/bootstrap-dev-env.sh
 source scripts/dev-env.sh
-scripts/prepare-prebuilt-dependencies.sh
+scripts/build-native-dependencies.sh
 ```
 
 Run the standard verification sequence with:
@@ -95,12 +104,23 @@ scripts/verify.sh
 ```
 
 Do not commit `.devtools/`, `local.properties`, downloaded SDK components,
-Gradle caches, APK/AAB files, or signing credentials. This source snapshot does
-not currently contain the Gradle launcher scripts, wrapper JAR, or prebuilt
-native/JAR artifacts; restore these prerequisites before using the application
-build commands below. `prepare-prebuilt-dependencies.sh` downloads the project's
-published native binaries and rebuilds the Java wrapper JARs from the vendored
-source so their Java API matches this source tree.
+Gradle caches, APK/AAB files, or signing credentials. The native libraries,
+the standalone curl executable, and Java wrapper JARs are generated locally
+from the source trees under `external/`. Their transitive source archives are
+downloaded from the versioned URLs in `external/openconnect/android/Makefile`
+and verified there with pinned SHA-256 hashes. The build does not copy native
+artifacts from another APK and does not use the legacy public binary cache.
+
+To build only one ABI while iterating, pass its internal architecture name:
+
+```sh
+scripts/build-native-dependencies.sh arm64
+```
+
+The default build produces `arm` (ARMv7, for older 32-bit Android 6 devices)
+and `arm64` artifacts. The optional `x86` and `x86_64` names are supported for
+legacy emulators but are not included by default. Pass them explicitly only
+when those emulator ABIs are required.
 
 If you encounter any issues, take a look at [`misc/Dockerfile`](https://gitlab.com/openconnect/ics-openconnect/-/blob/master/misc/Dockerfile).
 

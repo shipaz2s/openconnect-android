@@ -16,6 +16,8 @@ export JAVA_HOME="${DEV_TOOLS_DIR}/jdk-17"
 export ANDROID_HOME="${DEV_TOOLS_DIR}/android-sdk"
 export ANDROID_USER_HOME="${DEV_TOOLS_DIR}/android-user-home"
 export GRADLE_USER_HOME="${DEV_TOOLS_DIR}/gradle-home"
+export ANDROID_NDK_HOME="${ANDROID_HOME}/ndk/27.2.12479018"
+export NDK_HOME="${ANDROID_NDK_HOME}"
 export PATH="${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
 
 unset DEV_ENV_ROOT

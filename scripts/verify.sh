@@ -16,7 +16,7 @@ if [[ ! -f "${ROOT_DIR}/app/libs/openconnect-wrapper.jar" ||
       ! -f "${ROOT_DIR}/app/libs/stoken-wrapper.jar" ||
       ! -f "${ROOT_DIR}/app/src/main/jniLibs/arm64-v8a/libopenconnect.so" ]]; then
     echo "Application dependencies are missing." >&2
-    echo "Run scripts/prepare-prebuilt-dependencies.sh first." >&2
+    echo "Run scripts/build-native-dependencies.sh first." >&2
     exit 1
 fi
 

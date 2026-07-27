@@ -12,6 +12,7 @@ ANDROID_USER_HOME="${DEV_TOOLS_DIR}/android-user-home"
 
 ANDROID_COMMAND_LINE_TOOLS_VERSION="11076708"
 GRADLE_VERSION="8.10.2"
+NDK_VERSION="27.2.12479018"
 
 JDK_ARCHIVE="${DOWNLOAD_DIR}/temurin-jdk-17.tar.gz"
 ANDROID_TOOLS_ARCHIVE="${DOWNLOAD_DIR}/commandlinetools-linux-${ANDROID_COMMAND_LINE_TOOLS_VERSION}_latest.zip"
@@ -74,7 +75,8 @@ yes | sdkmanager --licenses >/dev/null || true
 sdkmanager \
     "platform-tools" \
     "build-tools;34.0.0" \
-    "platforms;android-35"
+    "platforms;android-35" \
+    "ndk;${NDK_VERSION}"
 
 download "${GRADLE_URL}" "${GRADLE_ARCHIVE}"
 if [[ ! -x "${DEV_TOOLS_DIR}/gradle-${GRADLE_VERSION}/bin/gradle" ]]; then
