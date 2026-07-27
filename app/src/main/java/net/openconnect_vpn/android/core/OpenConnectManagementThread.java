@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -664,6 +665,61 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 		errorAlert(mContext.getString(R.string.error_cant_connect, mOC.getHostname()));
 	}
 
+    private boolean configureAppRouting(final VpnService.Builder builder) {
+        if (!mProfile.isAppRoutingAllowlistEnabled()) {
+            return true;
+        }
+
+        if (mProfile.getAppRoutingPackages().isEmpty()) {
+            log("Application allowlist is enabled but empty");
+            errorAlert(mContext.getString(R.string.app_routing_empty_error));
+            return false;
+        }
+
+        final PackageManager packageManager = mContext.getPackageManager();
+        AppRoutingConfig.Result result;
+        try {
+            result = AppRoutingConfig.validate(mProfile.getAppRoutingPackages(),
+                    new AppRoutingConfig.PackageAvailability() {
+                        @Override
+                        public boolean isInstalled(String packageName) {
+                            try {
+                                packageManager.getApplicationInfo(packageName, 0);
+                                return true;
+                            } catch (PackageManager.NameNotFoundException e) {
+                                return false;
+                            }
+                        }
+                    });
+        } catch (IllegalArgumentException e) {
+            log("Application allowlist contains no installed packages");
+            errorAlert(mContext.getString(R.string.app_routing_no_installed_error));
+            return false;
+        }
+
+        for (String packageName : result.getMissingPackages()) {
+            log("Application allowlist: skipping missing package " + packageName);
+        }
+
+        int added = 0;
+        for (String packageName : result.getInstalledPackages()) {
+            try {
+                builder.addAllowedApplication(packageName);
+                added++;
+                log("Application allowlist: added " + packageName);
+            } catch (PackageManager.NameNotFoundException e) {
+                // The package may have been removed after validation.
+                log("Application allowlist: package disappeared " + packageName);
+            }
+        }
+        if (added == 0) {
+            log("Application allowlist contains no installed packages");
+            errorAlert(mContext.getString(R.string.app_routing_no_installed_error));
+            return false;
+        }
+        return true;
+    }
+
 	private void extractBinaries() {
 		if (!AssetExtractor.extractAll(mContext)) {
 			log("Error extracting assets");
@@ -738,6 +794,9 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 
 		VpnService.Builder b = mOpenVPNService.getVpnServiceBuilder();
 		setIPInfo(b);
+        if (!configureAppRouting(b)) {
+            return false;
+        }
 
 		ParcelFileDescriptor pfd;
 		try {
