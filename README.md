@@ -34,17 +34,57 @@ You can download the latest release from the GitLab [releases](https://gitlab.co
 
 ## Building from source
 
+The application currently uses `minSdk 23` (Android 6), `targetSdk 34`, and
+`compileSdk 35`. JDK 17 is required by the Android Gradle Plugin used by this
+project.
+
 ### Prerequisites
 
-On the host side you'll need to install:
+The Android application build requires:
 
-* Android SDK in your $PATH (both platform-tools/ and tools/ directories)
-* $ANDROID\_HOME pointed at the Android SDK directory
-* JDK 17 and a recent version of Apache ant in your $PATH
-* Use the Android SDK Manager to install `"platform-tools" "build-tools;34.0.0" "platforms;android-35"`
-* NDK r27c, nominally unzipped under /opt/android-sdk-linux\_x86/
-* Host-side gcc, make, etc. (Red Hat "Development Tools" group or Debian build-essential)
-* git, autoconf, automake, and libtool
+* a 64-bit Linux host;
+* JDK 17;
+* Gradle 8.10.2 (normally supplied by the Gradle wrapper);
+* Android SDK command-line tools;
+* SDK packages `"platform-tools"`, `"build-tools;34.0.0"`, and
+  `"platforms;android-35"`;
+* NDK r27c when rebuilding native dependencies;
+* a recent Apache Ant when rebuilding Java parts of the native dependencies;
+* host-side `git`, `gcc`, `make`, `autoconf`, `automake`, and `libtool`.
+
+`ANDROID_HOME` must point to the Android SDK. `JAVA_HOME` must point to JDK 17.
+The SDK's `platform-tools` and `cmdline-tools/latest/bin` directories must be
+available in `PATH`.
+
+### Project-local development environment
+
+To avoid changing the host's system Java or Android installation, the preferred
+development setup for this repository keeps downloaded tools under the ignored
+`.devtools/` directory:
+
+```text
+.devtools/
+├── jdk-17/
+├── android-sdk/
+└── gradle-home/
+```
+
+An environment activation script should set the following variables only for
+the current shell:
+
+```sh
+export JAVA_HOME="$PWD/.devtools/jdk-17"
+export ANDROID_HOME="$PWD/.devtools/android-sdk"
+export GRADLE_USER_HOME="$PWD/.devtools/gradle-home"
+export ANDROID_USER_HOME="$PWD/.devtools/android-user-home"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+```
+
+Do not commit `.devtools/`, `local.properties`, downloaded SDK components,
+Gradle caches, APK/AAB files, or signing credentials. This source snapshot does
+not currently contain the Gradle launcher scripts, wrapper JAR, or prebuilt
+native/JAR artifacts; restore these prerequisites before using the commands
+below. The environment bootstrap will be added as a separate, reviewed change.
 
 If you encounter any issues, take a look at [`misc/Dockerfile`](https://gitlab.com/openconnect/ics-openconnect/-/blob/master/misc/Dockerfile).
 
