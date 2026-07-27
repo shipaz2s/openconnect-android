@@ -80,11 +80,27 @@ export ANDROID_USER_HOME="$PWD/.devtools/android-user-home"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
 ```
 
+Bootstrap and activate this local environment with:
+
+```sh
+scripts/bootstrap-dev-env.sh
+source scripts/dev-env.sh
+scripts/prepare-prebuilt-dependencies.sh
+```
+
+Run the standard verification sequence with:
+
+```sh
+scripts/verify.sh
+```
+
 Do not commit `.devtools/`, `local.properties`, downloaded SDK components,
 Gradle caches, APK/AAB files, or signing credentials. This source snapshot does
 not currently contain the Gradle launcher scripts, wrapper JAR, or prebuilt
-native/JAR artifacts; restore these prerequisites before using the commands
-below. The environment bootstrap will be added as a separate, reviewed change.
+native/JAR artifacts; restore these prerequisites before using the application
+build commands below. `prepare-prebuilt-dependencies.sh` downloads the project's
+published native binaries and rebuilds the Java wrapper JARs from the vendored
+source so their Java API matches this source tree.
 
 If you encounter any issues, take a look at [`misc/Dockerfile`](https://gitlab.com/openconnect/ics-openconnect/-/blob/master/misc/Dockerfile).
 

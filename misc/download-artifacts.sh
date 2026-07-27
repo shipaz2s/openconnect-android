@@ -4,6 +4,7 @@ set -euo pipefail
 
 BASE=https://storage.googleapis.com/cernekee-travis/ics-openconnect
 
+mkdir -p app/libs
 pushd app/libs
 wget -O openconnect-wrapper.jar ${BASE}/openconnect-wrapper.jar
 wget -O stoken-wrapper.jar ${BASE}/stoken-wrapper.jar
