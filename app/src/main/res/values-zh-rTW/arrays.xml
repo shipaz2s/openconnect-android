@@ -35,6 +35,8 @@
       <item>建立連線中</item>
       <item>已連線</item>
       <item>已斷開連線</item>
+      <item>Reconnecting</item>
+      <item>Waiting for network</item>
   </string-array>
 
   <string-array name="faq_text">

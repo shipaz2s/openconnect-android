@@ -36,6 +36,8 @@ public interface OpenVPNManagement {
 
 	void reconnect();
 
+	void networkChanged(boolean available);
+
 	void pause();
 
 	void resume();

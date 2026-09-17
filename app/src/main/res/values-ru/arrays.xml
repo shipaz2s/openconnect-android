@@ -26,5 +26,7 @@
         <item>Подключение</item>
         <item>Подключено</item>
         <item>Отключено</item>
+        <item>Переподключение</item>
+        <item>Ожидание сети</item>
     </string-array>
 </resources>

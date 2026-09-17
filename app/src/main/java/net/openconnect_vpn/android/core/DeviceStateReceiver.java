@@ -140,6 +140,7 @@ public class DeviceStateReceiver extends BroadcastReceiver {
         mNetworkState.initialize(usableNetworks, activeNetwork);
         mNetworkMonitoring = true;
         Log.i(TAG, "initial underlying network: " + mNetworkState.getCurrentNetwork());
+        mManagement.networkChanged(mNetworkState.getCurrentNetwork() != null);
         updatePauseState();
 
         NetworkRequest request = new NetworkRequest.Builder()
@@ -223,6 +224,7 @@ public class DeviceStateReceiver extends BroadcastReceiver {
         Log.i(TAG, "underlying network " + network + " action=" + action);
         if (action == UnderlyingNetworkState.Action.PAUSE
                 || action == UnderlyingNetworkState.Action.RESUME) {
+            mManagement.networkChanged(action == UnderlyingNetworkState.Action.RESUME);
             mHandler.removeCallbacks(mReconnectRunnable);
             mReconnectPending = false;
             updatePauseState();

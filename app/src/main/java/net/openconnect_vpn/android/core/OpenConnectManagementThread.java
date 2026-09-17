@@ -65,6 +65,8 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 	public static final int STATE_CONNECTING = 4;
 	public static final int STATE_CONNECTED = 5;
 	public static final int STATE_DISCONNECTED = 6;
+	public static final int STATE_RECONNECTING = 7;
+	public static final int STATE_WAITING_FOR_NETWORK = 8;
 
 	private Context mContext;
 	private VpnProfile mProfile;
@@ -101,6 +103,10 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
     private boolean getBoolPref(final String key) {
     	return mPrefs.getBoolean(key, false);
     }
+	static boolean isDeadPeerMessage(String message) {
+		return message != null && message.toLowerCase(Locale.US).contains("detected dead peer");
+	}
+
 
     private void putStringPref(final String key, String value) {
     	mPrefs.edit().putString(key, value).apply();
@@ -256,7 +262,16 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 		}
 
 		public void onProgress(int level, String msg) {
+			if (isDeadPeerMessage(msg)) {
+				setState(STATE_RECONNECTING);
+			}
 			mOpenVPNService.log(level, "LIB: " + msg.trim());
+		}
+
+		@Override
+		public void onReconnected() {
+			log("CALLBACK: onReconnected");
+			setState(STATE_CONNECTED);
 		}
 
 		public void onProtectSocket(int fd) {
@@ -849,10 +864,24 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 		log("RECONNECT");
 		// if mRequestPause is false, this will drop the connection and immediately
 		// restart the mainloop
+		boolean requested = false;
 		synchronized (mMainloopLock) {
 			if (mOC != null) {
+				requested = true;
 				mOC.pause();
 			}
+		}
+		if (requested) {
+			setState(STATE_RECONNECTING);
+		}
+	}
+
+	@Override
+	public void networkChanged(boolean available) {
+		if (!available) {
+			setState(STATE_WAITING_FOR_NETWORK);
+		} else if (mOpenVPNService.getConnectionState() == STATE_WAITING_FOR_NETWORK) {
+			setState(STATE_RECONNECTING);
 		}
 	}
 

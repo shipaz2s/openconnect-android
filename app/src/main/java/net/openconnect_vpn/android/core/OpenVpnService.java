@@ -432,6 +432,7 @@ public class OpenVpnService extends VpnService {
 	}
 
 	public synchronized void setConnectionState(int state) {
+		Log.i(TAG, "connection state " + mConnectionState + " -> " + state);
 		if (state == OpenConnectManagementThread.STATE_CONNECTED &&
 				mConnectionState != OpenConnectManagementThread.STATE_CONNECTED) {
 			startTime = new Date();

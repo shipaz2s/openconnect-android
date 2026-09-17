@@ -31,5 +31,7 @@
     <item>Conectando</item>
     <item>Conectado</item>
     <item>Desconectado</item>
+    <item>Reconnecting</item>
+    <item>Waiting for network</item>
   </string-array>
 </resources>
