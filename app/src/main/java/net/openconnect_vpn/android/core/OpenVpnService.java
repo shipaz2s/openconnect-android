@@ -35,7 +35,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
 import android.net.VpnService;
 import android.os.*;
 import android.preference.PreferenceManager;
@@ -136,9 +135,7 @@ public class OpenVpnService extends VpnService {
 	@Override
 	public void onDestroy() {
 		killVPNThread(true);
-		if (mDeviceStateReceiver != null) {
-			this.unregisterReceiver(mDeviceStateReceiver);
-		}
+		unregisterReceivers();
 		mVPNLog.saveToFile(getCacheDir().getAbsolutePath() + "/logdata.ser");
 	}
 
@@ -173,10 +170,8 @@ public class OpenVpnService extends VpnService {
 	}
 
 	@SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private void registerDeviceStateReceiver(OpenVPNManagement management) {
-		// Registers BroadcastReceiver to track network connection changes.
+	private void registerDeviceStateReceiver(OpenVPNManagement management) {
 		IntentFilter filter = new IntentFilter();
-		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		filter.addAction(DeviceStateReceiver.PREF_CHANGED);
 		filter.addAction(Intent.ACTION_SCREEN_OFF);
 		filter.addAction(Intent.ACTION_SCREEN_ON);
@@ -185,6 +180,7 @@ public class OpenVpnService extends VpnService {
 			registerReceiver(mDeviceStateReceiver, filter, Context.RECEIVER_EXPORTED);
 		else
 			registerReceiver(mDeviceStateReceiver, filter);
+		mDeviceStateReceiver.startNetworkMonitoring(this);
 	}
 
 	@SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -221,6 +217,7 @@ public class OpenVpnService extends VpnService {
 	private void unregisterReceivers() {
 		try {
 			if (mDeviceStateReceiver != null) {
+				mDeviceStateReceiver.stopNetworkMonitoring();
 				unregisterReceiver(mDeviceStateReceiver);
 			}
 			mDeviceStateReceiver = null;
@@ -277,12 +274,11 @@ public class OpenVpnService extends VpnService {
 		// stopSelfResult(previous_startId) will not
 		mStartId = startId;
 
+		unregisterReceivers();
         mVPN = new OpenConnectManagementThread(getApplicationContext(), profile, this);
+		registerDeviceStateReceiver(mVPN);
         mVPNThread = new Thread(mVPN, "OpenVPNManagementThread");
         mVPNThread.start();
-
-		unregisterReceivers();
-		registerDeviceStateReceiver(mVPN);
 
 		ProfileManager.setConnectedVpnProfile(profile);
 

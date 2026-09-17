@@ -29,9 +29,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.NetworkInfo.State;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.os.Handler;
 import android.util.Log;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class DeviceStateReceiver extends BroadcastReceiver {
 
@@ -46,10 +51,29 @@ public class DeviceStateReceiver extends BroadcastReceiver {
     private boolean mNetchangeReconnect;
 
     private boolean mScreenOff;
-    private boolean mNetworkOff;
-    private int mNetworkType = -1;
     private boolean mKeepaliveActive;
     private boolean mPaused;
+
+    private final Handler mHandler = new Handler();
+    private final UnderlyingNetworkState<Network> mNetworkState =
+            new UnderlyingNetworkState<Network>();
+    private ConnectivityManager mConnectivityManager;
+    private ConnectivityManager.NetworkCallback mNetworkCallback;
+    private boolean mNetworkMonitoring;
+    private boolean mReconnectPending;
+
+    private static final long RECONNECT_DEBOUNCE_MS = 500;
+    private final Runnable mReconnectRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mReconnectPending = false;
+            if (mNetworkMonitoring && !mPaused
+                    && mNetworkState.getCurrentNetwork() != null) {
+                Log.i(TAG, "reconnecting due to underlying network change");
+                mManagement.reconnect();
+            }
+        }
+    };
 
     public DeviceStateReceiver(OpenVPNManagement management, SharedPreferences prefs) {
         super();
@@ -68,14 +92,16 @@ public class DeviceStateReceiver extends BroadcastReceiver {
     	if (mPauseOnScreenOff && mScreenOff && !mKeepaliveActive) {
     		pause = true;
     	}
-    	if (mNetworkOff) {
+        if (mNetworkState.getCurrentNetwork() == null) {
     		pause = true;
     	}
     	if (pause && !mPaused) {
-    		Log.i(TAG, "pausing: mScreenOff=" + mScreenOff + " mNetworkOff=" + mNetworkOff);
+            Log.i(TAG, "pausing: mScreenOff=" + mScreenOff
+                    + " underlyingNetwork=" + mNetworkState.getCurrentNetwork());
     		mManagement.pause();
     	} else if (!pause && mPaused) {
-    		Log.i(TAG, "resuming: mScreenOff=" + mScreenOff + " mNetworkOff=" + mNetworkOff);
+            Log.i(TAG, "resuming: mScreenOff=" + mScreenOff
+                    + " underlyingNetwork=" + mNetworkState.getCurrentNetwork());
     		mManagement.resume();
     	}
     	mPaused = pause;
@@ -88,9 +114,6 @@ public class DeviceStateReceiver extends BroadcastReceiver {
     	if (PREF_CHANGED.equals(s)) {
     		mManagement.prefChanged();
     		readPrefs();
-            networkStateChange(context);
-    	} else if (ConnectivityManager.CONNECTIVITY_ACTION.equals(s)) {
-            networkStateChange(context);
         } else if (Intent.ACTION_SCREEN_OFF.equals(s)) {
         	mScreenOff = true;
         } else if (Intent.ACTION_SCREEN_ON.equals(s)) {
@@ -99,24 +122,122 @@ public class DeviceStateReceiver extends BroadcastReceiver {
         updatePauseState();
     }
 
-    private void networkStateChange(Context context) {
-        ConnectivityManager conn = (ConnectivityManager)
+    public void startNetworkMonitoring(Context context) {
+        mConnectivityManager = (ConnectivityManager)
                 context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = conn.getActiveNetworkInfo();
 
-        if (networkInfo == null || networkInfo.getState() != State.CONNECTED) {
-        	mNetworkOff = true;
-        } else {
-        	int networkType = networkInfo.getType();
-        	if (mNetworkType != -1 && mNetworkType != networkType) {
-        		if (!mPaused && mNetchangeReconnect) {
-        			Log.i(TAG, "reconnecting due to network type change");
-        			mManagement.reconnect();
-        		}
-        	}
-        	mNetworkType = networkType;
-        	mNetworkOff = false;
+        Set<Network> usableNetworks = new HashSet<Network>();
+        for (Network network : mConnectivityManager.getAllNetworks()) {
+            if (isUsableUnderlyingNetwork(
+                    mConnectivityManager.getNetworkCapabilities(network))) {
+                usableNetworks.add(network);
+            }
         }
+        Network activeNetwork = mConnectivityManager.getActiveNetwork();
+        if (!usableNetworks.contains(activeNetwork)) {
+            activeNetwork = null;
+        }
+        mNetworkState.initialize(usableNetworks, activeNetwork);
+        mNetworkMonitoring = true;
+        Log.i(TAG, "initial underlying network: " + mNetworkState.getCurrentNetwork());
+        updatePauseState();
+
+        NetworkRequest request = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                .build();
+        mNetworkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onCapabilitiesChanged(final Network network,
+                    NetworkCapabilities capabilities) {
+                final boolean usable = isUsableUnderlyingNetwork(capabilities);
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mNetworkMonitoring) {
+                            handleNetworkUsability(network, usable);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onLost(final Network network) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mNetworkMonitoring) {
+                            handleNetworkUsability(network, false);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onLosing(final Network network, int maxMsToLive) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mNetworkMonitoring) {
+                            handleNetworkAction(network, mNetworkState.onLosing(network));
+                        }
+                    }
+                });
+            }
+        };
+        mConnectivityManager.registerNetworkCallback(request, mNetworkCallback);
+    }
+
+    public void stopNetworkMonitoring() {
+        mNetworkMonitoring = false;
+        mHandler.removeCallbacksAndMessages(null);
+        mReconnectPending = false;
+        if (mConnectivityManager != null && mNetworkCallback != null) {
+            try {
+                mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "network callback was not registered", e);
+            }
+        }
+        mNetworkCallback = null;
+        mConnectivityManager = null;
+    }
+
+    private boolean isUsableUnderlyingNetwork(NetworkCapabilities capabilities) {
+        return capabilities != null
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN);
+    }
+
+    private void handleNetworkUsability(Network network, boolean usable) {
+        UnderlyingNetworkState.Action action = mNetworkState.setUsable(network, usable);
+        handleNetworkAction(network, action);
+    }
+
+    private void handleNetworkAction(Network network,
+            UnderlyingNetworkState.Action action) {
+        if (action == UnderlyingNetworkState.Action.NONE) {
+            return;
+        }
+
+        Log.i(TAG, "underlying network " + network + " action=" + action);
+        if (action == UnderlyingNetworkState.Action.PAUSE
+                || action == UnderlyingNetworkState.Action.RESUME) {
+            mHandler.removeCallbacks(mReconnectRunnable);
+            mReconnectPending = false;
+            updatePauseState();
+        } else if (action == UnderlyingNetworkState.Action.RECONNECT
+                && mNetchangeReconnect && !mPaused) {
+            scheduleReconnect();
+        }
+    }
+
+    private void scheduleReconnect() {
+        if (mReconnectPending) {
+            return;
+        }
+        mReconnectPending = true;
+        mHandler.postDelayed(mReconnectRunnable, RECONNECT_DEBOUNCE_MS);
     }
 
     public void setKeepalive(boolean active) {

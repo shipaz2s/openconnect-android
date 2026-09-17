@@ -765,6 +765,9 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 			errorAlert(mContext.getString(R.string.error_invalid_hostname, mServerAddr));
 			return false;
 		}
+		if (!waitForNetwork()) {
+			return false;
+		}
 		int ret = mOC.obtainCookie();
 		if (ret < 0) {
 			// don't pop up an alert if the user rejected the server cert
@@ -857,10 +860,26 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 	public void pause () {
 		log("PAUSE");
 		synchronized (mMainloopLock) {
-			if (!mRequestPause && !mRequestDisconnect && mOC != null) {
+			if (!mRequestPause && !mRequestDisconnect) {
 				mRequestPause = true;
-				mOC.pause();
+				if (mOC != null) {
+					mOC.pause();
+				}
 			}
+		}
+	}
+
+	private boolean waitForNetwork() {
+		synchronized (mMainloopLock) {
+			while (mRequestPause && !mRequestDisconnect) {
+				try {
+					mMainloopLock.wait();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return false;
+				}
+			}
+			return !mRequestDisconnect;
 		}
 	}
 
