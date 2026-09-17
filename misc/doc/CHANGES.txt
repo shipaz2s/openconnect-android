@@ -1,3 +1,15 @@
+v1.13 - 2026/09/18
+
+ - Track physical network identity with ConnectivityManager.NetworkCallback
+
+ - Automatically pause, resume, and reconnect across network changes
+
+ - Show waiting-for-network and reconnecting connection states
+
+ - Preserve the existing VPN tunnel, routes, DNS, and per-app allowlist during reconnect
+
+ - Keep server-requested disconnects terminal
+
 v1.12 - 2025/01/23
 
  - Drop support for < Android 6 devices

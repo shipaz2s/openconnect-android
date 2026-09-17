@@ -1,0 +1,5 @@
+* Detect Wi-Fi, mobile, and same-transport network changes more reliably
+* Automatically pause while offline and reconnect when a network returns
+* Show waiting-for-network and reconnecting states instead of stale connected status
+* Preserve VPN routes, DNS, IPv4/IPv6, and per-app routing during reconnect
+* Keep explicit server-requested disconnects as normal terminal disconnects
