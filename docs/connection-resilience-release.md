@@ -2,6 +2,14 @@
 
 Release: `v1.13-split`
 
+Artifact: `openconnect-split-1.13.apk`
+
+SHA-256:
+`001c70a1b6ac71f3f22ae84e0afddc7d35fe4ea6e8a6997b86952fe69751b071`
+
+Signing certificate SHA-256:
+`bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b23b599cabf0169`
+
 ## Automated verification
 
 - `testDebugUnitTest` passed.
