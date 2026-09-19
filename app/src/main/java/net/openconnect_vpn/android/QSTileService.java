@@ -12,12 +12,18 @@
 package net.openconnect_vpn.android;
 
 import android.annotation.TargetApi;
+import android.annotation.SuppressLint;
+import android.app.PendingIntent;
+import android.os.Build;
+import android.content.Intent;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import android.util.Log;
 import net.openconnect_vpn.android.core.OpenConnectManagementThread;
 import net.openconnect_vpn.android.core.OpenVpnService;
 import net.openconnect_vpn.android.core.VPNConnector;
+import net.openconnect_vpn.android.core.ProfileManager;
+import net.openconnect_vpn.android.api.GrantPermissionsActivity;
 
 /**
  * @author Terry E-mail: yaoxinghuo at qq dot com
@@ -35,6 +41,7 @@ public class QSTileService extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
+        mConnectionState = -1;
         mConn = new VPNConnector(this, true) {
             @Override
             public void onUpdate(OpenVpnService service) {
@@ -84,7 +91,8 @@ public class QSTileService extends TileService {
                     break;
                 default:
                     tileLabel = service.getConnectionStateName();
-                    tileState = Tile.STATE_UNAVAILABLE;
+                    // Connecting is not connected: keep the tile inactive and clickable.
+                    tileState = Tile.STATE_INACTIVE;
                     break;
             }
             mConnectionState = newState;
@@ -101,11 +109,31 @@ public class QSTileService extends TileService {
         }
     }
 
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     private void toggle() {
-        if (mConnectionState == OpenConnectManagementThread.STATE_CONNECTED) {
+        if (mConn != null && mConn.service != null && mConn.service.isStopRequested()) {
+            return;
+        }
+        if (mConn != null && mConn.service != null &&
+                mConnectionState != OpenConnectManagementThread.STATE_DISCONNECTED) {
             mConn.service.stopVPN();
-        } else if (mConnectionState == OpenConnectManagementThread.STATE_DISCONNECTED) {
-            mConn.service.startReconnectActivity(this);
+            return;
+        }
+
+        VpnProfile profile = ProfileManager.getLastUsedVpnProfile();
+        if (profile != null) {
+            Intent intent = new Intent(this, GrantPermissionsActivity.class);
+            intent.putExtra(getPackageName() + GrantPermissionsActivity.EXTRA_UUID,
+                    profile.getUUIDString());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                        profile.getUUIDString().hashCode(), intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                startActivityAndCollapse(pendingIntent);
+            } else {
+                startActivityAndCollapse(intent);
+            }
         }
     }
 }

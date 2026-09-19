@@ -55,6 +55,7 @@ public class ProfileManager {
 	private static SharedPreferences mAppPrefs;
 
 	private static final String ON_BOOT_PROFILE = "onBootProfile";
+	private static final String LAST_USED_PROFILE = "lastUsedProfile";
 	private static final String RESTART_ON_BOOT = "restartvpnonboot" + "_FIXME"; // FIXME
 
 	private static VpnProfile mLastConnectedVpn=null;
@@ -252,6 +253,9 @@ public class ProfileManager {
 		}
 
 		mProfiles.remove(uuid);
+		if (uuid.equals(mAppPrefs.getString(LAST_USED_PROFILE, null))) {
+			mAppPrefs.edit().remove(LAST_USED_PROFILE).apply();
+		}
 
 		File f = new File(mContext.getApplicationInfo().dataDir + File.separator +
 				"shared_prefs" + File.separator + PROFILE_PFX + uuid + ".xml");
@@ -276,7 +280,17 @@ public class ProfileManager {
 		mLastConnectedVpn = connectedProfile;
 		mAppPrefs.edit()
 			.putString(ON_BOOT_PROFILE, connectedProfile.getUUIDString())
+			.putString(LAST_USED_PROFILE, connectedProfile.getUUIDString())
 			.apply();
+	}
+
+	public synchronized static VpnProfile getLastUsedVpnProfile() {
+		String uuid = mAppPrefs.getString(LAST_USED_PROFILE, null);
+		if (uuid == null) {
+			// Migrate users upgrading from releases which only persisted the service UUID.
+			uuid = mAppPrefs.getString("service_mUUID", null);
+		}
+		return get(uuid);
 	}
 
 	public synchronized static VpnProfile getOnBootProfile() {
