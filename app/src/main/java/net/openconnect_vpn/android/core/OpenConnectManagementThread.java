@@ -67,6 +67,9 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 	public static final int STATE_DISCONNECTED = 6;
 	public static final int STATE_RECONNECTING = 7;
 	public static final int STATE_WAITING_FOR_NETWORK = 8;
+	// Bound retries release the TUN interface and Android VPN indicator after failure.
+	static final int DEFAULT_RECONNECT_TIMEOUT_SECONDS = 30;
+	static final int MAX_RECONNECT_TIMEOUT_SECONDS = 300;
 
 	private Context mContext;
 	private VpnProfile mProfile;
@@ -753,6 +756,20 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 		}
 	}
 
+	static int parseReconnectTimeout(String value) {
+		try {
+			int timeout = Integer.parseInt(value);
+			return Math.max(0, Math.min(timeout, MAX_RECONNECT_TIMEOUT_SECONDS));
+		} catch (NumberFormatException e) {
+			return DEFAULT_RECONNECT_TIMEOUT_SECONDS;
+		}
+	}
+
+	private int getReconnectTimeout() {
+		return parseReconnectTimeout(mAppPrefs.getString("reconnect_timeout",
+				Integer.toString(DEFAULT_RECONNECT_TIMEOUT_SECONDS)));
+	}
+
 	private boolean runVPN() {
 		updateStatPref("attempt");
 
@@ -836,7 +853,7 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 			mOC.setupDTLS(60);
 
 		while (true) {
-			if (mOC.mainloop(300, LibOpenConnect.RECONNECT_INTERVAL_MIN) < 0) {
+			if (mOC.mainloop(getReconnectTimeout(), LibOpenConnect.RECONNECT_INTERVAL_MIN) < 0) {
 				break;
 			}
 			synchronized (mMainloopLock) {
@@ -927,12 +944,14 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
 	public boolean stopVPN() {
 		log("STOP");
 		synchronized (mMainloopLock) {
-			if (mRequestDisconnect || mOC == null) {
+			if (mRequestDisconnect) {
 				return true;
 			}
 			mRequestDisconnect = true;
 			mRequestPause = false;
-			mOC.cancel();
+			if (mOC != null) {
+				mOC.cancel();
+			}
 			mMainloopLock.notify();
 		}
 		return true;

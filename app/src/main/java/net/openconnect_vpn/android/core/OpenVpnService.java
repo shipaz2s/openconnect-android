@@ -91,6 +91,7 @@ public class OpenVpnService extends VpnService {
 	private final int NOTIFICATION_ID = 1;
 	private int mActivityConnections;
 	private boolean mNotificationActive;
+	private boolean mStopRequested;
 
 	private int mConnectionState = OpenConnectManagementThread.STATE_DISCONNECTED;
 	private String mConnectionStateNames[];
@@ -239,6 +240,7 @@ public class OpenVpnService extends VpnService {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		mStopRequested = false;
 
 		if (intent == null) {
 			Log.e(TAG, "OpenVpnService started with null intent");
@@ -415,6 +417,8 @@ public class OpenVpnService extends VpnService {
 
 	public synchronized void threadDone() {
 		final int startId = mStartId;
+		mStopRequested = false;
+		wakeUpActivity();
 
 		Log.i(TAG, "VPN thread has terminated");
 		mVPN = null;
@@ -511,8 +515,21 @@ public class OpenVpnService extends VpnService {
 		context.startActivity(intent);
 	}
 
-	public void stopVPN() {
-		killVPNThread(false);
+	public synchronized boolean isStopRequested() {
+		return mStopRequested;
+	}
+
+	public synchronized void stopVPN() {
+		mStopRequested = true;
+		if (mDialog != null) {
+			mDialog.cancel();
+			if (mDialogContext != null) {
+				mDialog.onStop(mDialogContext);
+			}
+			mDialog = null;
+			mDialogContext = null;
+		}
+		doStopVPN();
 		ProfileManager.setConnectedVpnProfileDisconnected();
 	}
 }

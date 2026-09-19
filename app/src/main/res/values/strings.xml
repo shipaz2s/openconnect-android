@@ -35,6 +35,11 @@
     <string name="add_profile_hostname_prompt">Enter the hostname, IP address, or URL:</string>
     <string name="hostname_examples">Valid formats include:\nvpn.example.com (typical usage)\nvpn.example.com:443 (host:port)\nhttps://vpn.example.com/my-group-url</string>
     <string name="disconnect">Disconnect</string>
+    <string name="abort_connection">Cancel connection</string>
+    <string name="cancelling_connection">Cancelling…</string>
+    <string name="about_version">OpenConnect Split %1$s</string>
+    <string name="reconnect_timeout_title">Reconnect timeout</string>
+    <string name="reconnect_timeout_summary">How long to restore a dropped VPN connection</string>
     <string name="reconnect">Reconnect</string>
     <string name="reconnect_to">Reconnect to %1$s</string>
     <string name="clear_log">Clear log</string>

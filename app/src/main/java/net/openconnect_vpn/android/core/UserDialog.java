@@ -55,6 +55,17 @@ public abstract class UserDialog {
 		return mResult;
 	}
 
+	public void cancel() {
+		synchronized (this) {
+			mResult = getCancelResult();
+			this.notifyAll();
+		}
+	}
+
+	protected Object getCancelResult() {
+		return Boolean.TRUE;
+	}
+
 	protected void finish(Object result) {
 		synchronized (this) {
 			if (mDialogUp) {

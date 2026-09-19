@@ -106,16 +106,24 @@ public class LogFragment extends ListFragment {
     		if (mCancelButton != null) {
     			String title;
     			if (state == OpenConnectManagementThread.STATE_DISCONNECTED) {
-    				title = getString(R.string.reconnect);
+				title = getString(R.string.reconnect);
     				mCancelButton.setIcon(R.drawable.ic_action_refresh);
 					mCancelButton.setVisible(service.getReconnectName() != null);
     				mDisconnected = true;
     			} else {
-    				title = getString(R.string.disconnect);
+				title = getString(state == OpenConnectManagementThread.STATE_CONNECTED
+							? R.string.disconnect : R.string.abort_connection);
     				mCancelButton.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
 					mCancelButton.setVisible(true);
+					mCancelButton.setEnabled(true);
     				mDisconnected = false;
     			}
+				if (service.isStopRequested()) {
+					mCancelButton.setEnabled(false);
+					title = getString(R.string.cancelling_connection);
+				} else {
+					mCancelButton.setEnabled(true);
+				}
 				mCancelButton.setTitle(title);
 				mCancelButton.setTitleCondensed(title);
     		}
@@ -194,6 +202,10 @@ public class LogFragment extends ListFragment {
 
     private void stopVPN() {
     	if (mConn.service != null) {
+			if (mCancelButton != null) {
+				mCancelButton.setEnabled(false);
+				mCancelButton.setTitle(R.string.cancelling_connection);
+			}
     		Log.d(TAG, "connection terminated via UI");
     		mConn.service.stopVPN();
     	}

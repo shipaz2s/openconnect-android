@@ -37,6 +37,9 @@
   <string name="disable_xml_post_summary">Исползовать старый метод аутентификации, может не сработать на новых серверах</string>
   <string name="disabled">отключено</string>
   <string name="disconnect">Отключиться</string>
+  <string name="abort_connection">Прервать подключение</string>
+  <string name="cancelling_connection">Отмена…</string>
+  <string name="about_version">OpenConnect Split %1$s</string>
   <string name="dpd_override">Переопределить DPD таймаут</string>
   <string name="dpd_override_summary">Использвать свой Dead Peer Detection таймаут вместо значений сервера по умолчанию.</string>
   <string name="dpd_value">Таймаут DPD</string>
@@ -77,6 +80,8 @@
   <string name="profile_label">Профиль:</string>
   <string name="profile_name">Имя профиля</string>
   <string name="prompt">%1$s пытается управлять %2$s</string>
+  <string name="reconnect_timeout_title">Тайм-аут переподключения</string>
+  <string name="reconnect_timeout_summary">Как долго восстанавливать прерванное VPN-соединение</string>
   <string name="reconnect">Переподключиться</string>
   <string name="reconnect_to">Переподключиться к %1$s</string>
   <string name="remote_trust">Я доверяю этому приложению.</string>

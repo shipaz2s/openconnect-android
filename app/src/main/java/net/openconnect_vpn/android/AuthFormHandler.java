@@ -104,6 +104,10 @@ public class AuthFormHandler extends UserDialog
 			}
 		}
 	}
+	@Override
+	protected Object getCancelResult() {
+		return LibOpenConnect.OC_FORM_RESULT_CANCELLED;
+	}
 
 	public String getFormDigest() {
 		return formPfx;

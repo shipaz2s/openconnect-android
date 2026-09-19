@@ -30,6 +30,15 @@
                 android:summary="@string/netchange_summary"
                 android:title="@string/netchange"/>
 
+        <ListPreference
+                android:key="reconnect_timeout"
+                android:title="@string/reconnect_timeout_title"
+                android:summary="@string/reconnect_timeout_summary"
+                android:dialogTitle="@string/reconnect_timeout_title"
+                android:entries="@array/reconnect_timeout_entries"
+                android:entryValues="@array/reconnect_timeout_values"
+                android:defaultValue="30" />
+
         <CheckBoxPreference
                 android:defaultValue="false"
                 android:key="screenoff"

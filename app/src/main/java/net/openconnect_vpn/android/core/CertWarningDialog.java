@@ -52,6 +52,11 @@ public class CertWarningDialog extends UserDialog
 	}
 
 	@Override
+	protected Object getCancelResult() {
+		return RESULT_NO;
+	}
+
+	@Override
 	public Object earlyReturn() {
 		return null;
 	}
