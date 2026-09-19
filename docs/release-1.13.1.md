@@ -4,7 +4,7 @@ Version: `1.13.1` (`versionCode 1131`)
 
 Artifact: `openconnect-split-1.13.1.apk`
 
-SHA-256: `d64a593e156122987d5da20ba76085ec1ce090ce77c9a2c971fe7b6cf7da5990`
+SHA-256: `98ea84630dfad7016f9f366c2c5ea2fbbe0546c73fb01189e7620fb4eebe3ccd`
 
 Signing certificate SHA-256: `bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b23b599cabf0169`
 
@@ -32,8 +32,10 @@ Tested on Xiaomi 24095PCADG, Android 16 (API 36), with `1.13.1-debug`:
 - The existing debug installation was upgraded in place and retained its profiles.
 - Repeated cancellation during `CONNECTING` and immediately after `CONNECTED` returned to `DISCONNECTED`; the VPN thread terminated and Android reported no active VPN network for the debug package.
 - The Quick Settings tile connected the last used profile, became active only after connection, and disconnected the tunnel on the next tap.
+- The active VPN exposed IPv4 and IPv6 addresses, IPv4 and IPv6 default routes, three VPN DNS servers, and UID allowlist ranges matching Telegram and Termux.
+- With Wi-Fi removed and a reachable mobile network that could not reach the VPN gateway, the 10-second reconnect watchdog expired exactly after 10 seconds and transitioned the UI to `DISCONNECTED`. The Quick Settings tile became inactive immediately; Android retained its system VPN indicator only while the TUN interface was held for the configured recovery window.
 
-The bounded reconnect timeout still requires a controlled test with an available underlying network and an unreachable VPN gateway. Android 6 verification remains pending.
+The bounded reconnect timeout is verified. Android 6 verification remains pending.
 
 ## Required device verification
 
