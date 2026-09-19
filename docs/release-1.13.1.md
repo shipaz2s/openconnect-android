@@ -2,7 +2,11 @@
 
 Version: `1.13.1` (`versionCode 1131`)
 
-Planned artifact: `openconnect-split-1.13.1.apk`
+Artifact: `openconnect-split-1.13.1.apk`
+
+SHA-256: `d64a593e156122987d5da20ba76085ec1ce090ce77c9a2c971fe7b6cf7da5990`
+
+Signing certificate SHA-256: `bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b23b599cabf0169`
 
 ## Changes
 
@@ -19,6 +23,7 @@ Planned artifact: `openconnect-split-1.13.1.apk`
 - Local unit tests: passed (`testDebugUnitTest`).
 - Debug APK assembly: passed (`assembleDebug`).
 - Android lint: passed (`lint`).
+- Signed release unit tests, assembly, lint, and APK signature verification: passed (`scripts/build-release.sh`).
 
 ## Required device verification
 
