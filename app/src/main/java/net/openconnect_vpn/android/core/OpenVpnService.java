@@ -99,6 +99,19 @@ public class OpenVpnService extends VpnService {
 
 	private VPNLog mVPNLog = new VPNLog();
 	private Handler mHandler = new Handler();
+	private final Runnable mReconnectTimeoutRunnable = new Runnable() {
+		@Override
+		public void run() {
+			synchronized (OpenVpnService.this) {
+				if (mConnectionState == OpenConnectManagementThread.STATE_RECONNECTING
+						&& mVPN != null) {
+					Log.w(TAG, "Reconnect timeout expired; stopping VPN");
+					log(VPNLog.LEVEL_INFO, "Reconnect timeout expired; stopping VPN");
+					stopVPN();
+				}
+			}
+		}
+	};
 
 	public class LocalBinder extends Binder {
 		public OpenVpnService getService() {
@@ -417,6 +430,7 @@ public class OpenVpnService extends VpnService {
 
 	public synchronized void threadDone() {
 		final int startId = mStartId;
+		mHandler.removeCallbacks(mReconnectTimeoutRunnable);
 		mStopRequested = false;
 		wakeUpActivity();
 
@@ -437,6 +451,14 @@ public class OpenVpnService extends VpnService {
 
 	public synchronized void setConnectionState(int state) {
 		Log.i(TAG, "connection state " + mConnectionState + " -> " + state);
+		if (state != OpenConnectManagementThread.STATE_RECONNECTING) {
+			mHandler.removeCallbacks(mReconnectTimeoutRunnable);
+		} else if (mConnectionState != OpenConnectManagementThread.STATE_RECONNECTING) {
+			int timeout = OpenConnectManagementThread.parseReconnectTimeout(
+					mPrefs.getString("reconnect_timeout", Integer.toString(
+							OpenConnectManagementThread.DEFAULT_RECONNECT_TIMEOUT_SECONDS)));
+			mHandler.postDelayed(mReconnectTimeoutRunnable, timeout * 1000L);
+		}
 		if (state == OpenConnectManagementThread.STATE_CONNECTED &&
 				mConnectionState != OpenConnectManagementThread.STATE_CONNECTED) {
 			startTime = new Date();
