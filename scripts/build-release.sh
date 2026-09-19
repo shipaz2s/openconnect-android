@@ -29,7 +29,7 @@ fi
 cd "${ROOT_DIR}"
 ./gradlew clean testReleaseUnitTest lintRelease assembleRelease --no-daemon
 
-APK="${ROOT_DIR}/app/build/outputs/apk/release/openconnect-split-1.13.1.apk"
+APK="${ROOT_DIR}/app/build/outputs/apk/release/openconnect-split-1.13.2.apk"
 if [[ ! -f "${APK}" ]]; then
     echo "Expected release APK was not produced: ${APK}" >&2
     exit 1

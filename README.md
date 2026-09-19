@@ -117,7 +117,7 @@ scripts/build-release.sh
 ```
 
 The resulting APK is written to
-`app/build/outputs/apk/release/openconnect-split-1.13.1.apk`.
+`app/build/outputs/apk/release/openconnect-split-1.13.2.apk`.
 
 Do not commit `.devtools/`, `local.properties`, downloaded SDK components,
 Gradle caches, APK/AAB files, or signing credentials. The native libraries,
