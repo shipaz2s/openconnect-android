@@ -4,7 +4,7 @@ Version: `1.13.2` (`versionCode 1132`)
 
 Artifact: `openconnect-split-1.13.2.apk`
 
-SHA-256: `d34f9ae6ea9bcf17488827ee92f9235a208f1f6b78863edb970217c7c32123df`
+SHA-256: `6dca9a71aeed9e0f0244b8d56d6228ebcecbcb463fc47c88168e06683a64c6fc`
 
 Signing certificate SHA-256: `bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b23b599cabf0169`
 
@@ -37,6 +37,8 @@ Tested on Xiaomi 24095PCADG, Android 16 (API 36), with `1.13.2-debug`:
 - The debug installation was upgraded in place and retained application data.
 - An `.ocprof` profile was imported successfully.
 - The imported profile was deleted successfully after fixing profile cleanup.
+- The signed release APK was installed successfully; Android reported
+  `versionCode 1132` and `versionName 1.13.2`.
 
 ## Pending verification
 
