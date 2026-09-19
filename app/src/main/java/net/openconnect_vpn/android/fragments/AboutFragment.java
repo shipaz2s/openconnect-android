@@ -52,7 +52,7 @@ public class AboutFragment extends Fragment  {
 
 		try {
 			PackageInfo packageinfo = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
-			ver.setText("OpenConnect for Android v" + packageinfo.versionName);
+			ver.setText(getString(R.string.about_version, packageinfo.versionName));
 		} catch (NameNotFoundException e) {
 			Log.e(TAG, "can't retrieve package version");
 		}

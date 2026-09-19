@@ -15,8 +15,8 @@ android {
         targetSdk 34
         compileSdk 35
 
-        versionCode 1130
-        versionName "1.13-split"
+        versionCode 1131
+        versionName "1.13.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -68,7 +68,7 @@ android {
             if (variant.buildType.name == "debug") {
                 outputFileName = "openconnect-split-debug.apk"
             } else if (variant.buildType.name == "release") {
-                outputFileName = "openconnect-split-1.13.apk"
+                outputFileName = "openconnect-split-1.13.1.apk"
             }
         }
     }

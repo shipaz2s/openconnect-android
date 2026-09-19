@@ -25,7 +25,7 @@ Changelog: see [doc/CHANGES.txt](misc/doc/CHANGES.txt)
 
 ## Downloads and support
 
-You can download the latest release from the GitLab [releases](https://gitlab.com/openconnect/ics-openconnect/-/releases) page directly. F-Droid listing is comming soon.
+Project releases and support are available at [shipaz2s/openconnect-android](https://github.com/shipaz2s/openconnect-android). For support, open a GitHub issue or email `shapovalp97@gmail.com`.
 
 ## Screenshots
 
@@ -117,7 +117,7 @@ scripts/build-release.sh
 ```
 
 The resulting APK is written to
-`app/build/outputs/apk/release/openconnect-split-1.13.apk`.
+`app/build/outputs/apk/release/openconnect-split-1.13.1.apk`.
 
 Do not commit `.devtools/`, `local.properties`, downloaded SDK components,
 Gradle caches, APK/AAB files, or signing credentials. The native libraries,
