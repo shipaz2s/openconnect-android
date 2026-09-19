@@ -64,6 +64,9 @@
   <string name="log">Лог</string>
   <string name="menu_add_profile">Добавить конфигурацию</string>
   <string name="menu_import_profile">Импортировать конфигурацию</string>
+  <string name="profile_import_select_ocprof">Выберите файл .ocprof</string>
+  <string name="profile_import_success">Профиль успешно импортирован</string>
+  <string name="profile_import_failed">Не удалось импортировать профиль</string>
   <string name="netchange">Переподключение при изменении сети</string>
   <string name="netchange_summary">Включение этого параметра заставит переподключиться, если состояние сети изменения (WIFI с мобильного)</string>
   <string name="netstatus">Статус сети:</string>

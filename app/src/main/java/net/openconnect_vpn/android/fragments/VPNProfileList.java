@@ -26,10 +26,9 @@
 
 package net.openconnect_vpn.android.fragments;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -53,6 +52,7 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.Html.ImageGetter;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -85,6 +85,8 @@ public class VPNProfileList extends ListFragment {
 	private static final int MENU_ADD_PROFILE = 1;
 	private static final int MENU_IMPORT_PROFILE = 2;
 	private static final int REQUEST_IMPORT_PROFILE = 1001;
+	private static final int MAX_PROFILE_SIZE_BYTES = 1024 * 1024;
+	private static final String TAG = "OpenConnect";
 	private boolean mIsTv;
 
 	private ArrayAdapter<VpnProfile> mArrayadapter;
@@ -391,7 +393,7 @@ public class VPNProfileList extends ListFragment {
 		if (fileName == null || !fileName.toLowerCase().endsWith(".ocprof")) {
 			Toast.makeText(
 				getActivity(),
-				"Please select an .ocprof file",
+				R.string.profile_import_select_ocprof,
 				Toast.LENGTH_LONG
 			).show();
 			return;
@@ -409,14 +411,15 @@ public class VPNProfileList extends ListFragment {
 
 			Toast.makeText(
 					getActivity(),
-					"Profile imported successfully",
+					R.string.profile_import_success,
 					Toast.LENGTH_LONG
 			).show();
 
 		} catch (Exception e) {
+			Log.e(TAG, "Failed to import profile from " + uri, e);
 			Toast.makeText(
 				getActivity(),
-				"Failed to read profile: " + e.getMessage(),
+				R.string.profile_import_failed,
 				Toast.LENGTH_LONG
 			).show();
 		}
@@ -431,17 +434,19 @@ public class VPNProfileList extends ListFragment {
 			throw new IOException("Unable to open file");
 
 		try {
-			BufferedReader reader =
-				new BufferedReader(new InputStreamReader(input, "UTF-8"));
+			ByteArrayOutputStream result = new ByteArrayOutputStream();
+			byte[] buffer = new byte[8192];
+			int total = 0;
+			int len;
 
-			StringBuilder result = new StringBuilder();
-			String line;
-
-			while ((line = reader.readLine()) != null) {
-				result.append(line).append('\n');
+			while ((len = input.read(buffer)) != -1) {
+				total += len;
+				if (total > MAX_PROFILE_SIZE_BYTES)
+					throw new IOException("Profile exceeds size limit");
+				result.write(buffer, 0, len);
 			}
 
-			return result.toString();
+			return result.toString("UTF-8");
 
 		} finally {
 			input.close();
@@ -472,6 +477,8 @@ public class VPNProfileList extends ListFragment {
 
 	private VpnProfile importParsedProfile(OcProfile imported) throws Exception {
 
+		// TODO: Build and validate this address structurally (IPv6, existing ports/paths,
+		// and missing or empty code words are not handled correctly yet).
 		String serverAddress = imported.address;
 		serverAddress += ":" + imported.port;
 		serverAddress += "/?" + imported.codeWord;
@@ -482,41 +489,45 @@ public class VPNProfileList extends ListFragment {
 						: imported.address;
 
 		VpnProfile profile = ProfileManager.create(profileSourceName);
-		copyAppRoutingFromLastProfile(profile);
+		boolean importedSuccessfully = false;
+		try {
+			copyAppRoutingFromLastProfile(profile);
 
-		String caFile = ProfileManager.storeFilePref(
-				profile,
-				"ca_certificate",
-				imported.caCertificate);
+			String caFile = ProfileManager.storeFilePref(
+					profile,
+					"ca_certificate",
+					imported.caCertificate);
 
-		String certFile = ProfileManager.storeFilePref(
-				profile,
-				"user_certificate",
-				imported.certificate);
+			String certFile = ProfileManager.storeFilePref(
+					profile,
+					"user_certificate",
+					imported.certificate);
 
-		String keyFile = ProfileManager.storeFilePref(
-				profile,
-				"private_key",
-				imported.privateKey);
+			String keyFile = ProfileManager.storeFilePref(
+					profile,
+					"private_key",
+					imported.privateKey);
 
-		if (caFile == null || certFile == null || keyFile == null) {
-			ProfileManager.delete(profile.getUUIDString());
-			throw new Exception("Failed to store certificates");
+			if (caFile == null || certFile == null || keyFile == null)
+				throw new Exception("Failed to store certificates");
+
+			SharedPreferences.Editor editor = profile.mPrefs.edit();
+
+			editor.putString("server_address", serverAddress);
+			editor.putString("ca_certificate", caFile);
+			editor.putString("user_certificate", certFile);
+			editor.putString("private_key", keyFile);
+
+			if (imported.codeWord != null)
+				editor.putString("code_word", imported.codeWord);
+
+			editor.apply();
+			importedSuccessfully = true;
+			return profile;
+		} finally {
+			if (!importedSuccessfully)
+				ProfileManager.rollbackCreatedProfile(profile.getUUIDString());
 		}
-
-		SharedPreferences.Editor editor = profile.mPrefs.edit();
-
-		editor.putString("server_address", serverAddress);
-		editor.putString("ca_certificate", caFile);
-		editor.putString("user_certificate", certFile);
-		editor.putString("private_key", keyFile);
-
-		if (imported.codeWord != null)
-			editor.putString("code_word", imported.codeWord);
-
-		editor.apply();
-
-		return profile;
 	}
 
 	private void copyAppRoutingFromLastProfile(VpnProfile newProfile) {

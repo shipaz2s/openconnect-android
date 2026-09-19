@@ -33,6 +33,9 @@
     <string name="configure_the_vpn">Configure the VPN</string>
     <string name="menu_add_profile">Add Profile</string>
     <string name="menu_import_profile">Import Profile</string>
+    <string name="profile_import_select_ocprof">Please select an .ocprof file</string>
+    <string name="profile_import_success">Profile imported successfully</string>
+    <string name="profile_import_failed">Failed to import profile</string>
     <string name="add_profile_hostname_prompt">Enter the hostname, IP address, or URL:</string>
     <string name="hostname_examples">Valid formats include:\nvpn.example.com (typical usage)\nvpn.example.com:443 (host:port)\nhttps://vpn.example.com/my-group-url</string>
     <string name="disconnect">Disconnect</string>

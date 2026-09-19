@@ -202,12 +202,10 @@ public class ProfileManager {
 	}
 
 	public synchronized static void deleteFilePref(VpnProfile profile, String key) {
-		String oldVal = profile.mPrefs.getString(key, null);
-		if (getCertFilename(profile, key).equals(oldVal)) {
-			File f = new File(getCertPath() + oldVal);
-			if (!f.delete()) {
-				Log.w(TAG, "error deleting " + oldVal);
-			}
+		String filename = getCertFilename(profile, key);
+		File f = new File(getCertPath() + filename);
+		if (f.exists() && !f.delete()) {
+			Log.w(TAG, "error deleting " + filename);
 		}
 	}
 
@@ -221,7 +219,7 @@ public class ProfileManager {
 			FileOutputStream out = new FileOutputStream(outFile);
 			byte buffer[] = new byte[65536];
 
-			int len = in.read(buffer);
+			int len;
 			while ((len = in.read(buffer)) != -1) {
 				out.write(buffer, 0, len);
 			}
@@ -273,6 +271,14 @@ public class ProfileManager {
 	}
 
 	public synchronized static boolean delete(String uuid) {
+		return delete(uuid, false);
+	}
+
+	public synchronized static boolean rollbackCreatedProfile(String uuid) {
+		return delete(uuid, true);
+	}
+
+	private static boolean delete(String uuid, boolean clearPendingWrites) {
 		VpnProfile profile = get(uuid);
 		if (profile == null) {
 			Log.w(TAG, "error looking up profile " + uuid);
@@ -286,6 +292,12 @@ public class ProfileManager {
 		mProfiles.remove(uuid);
 		if (uuid.equals(mAppPrefs.getString(LAST_USED_PROFILE, null))) {
 			mAppPrefs.edit().remove(LAST_USED_PROFILE).apply();
+		}
+		if (clearPendingWrites) {
+			// Flush a clear after any pending apply() calls before removing the backing file.
+			// Only fresh profiles are rolled back this way; an open editor may have listeners
+			// which are not prepared to receive null values for every preference.
+			profile.mPrefs.edit().clear().commit();
 		}
 
 		File f = new File(mContext.getApplicationInfo().dataDir + File.separator +
@@ -336,4 +348,3 @@ public class ProfileManager {
 	}
 
 }
-
