@@ -4,7 +4,7 @@ Version: `1.13.1` (`versionCode 1131`)
 
 Artifact: `openconnect-split-1.13.1.apk`
 
-SHA-256: `98ea84630dfad7016f9f366c2c5ea2fbbe0546c73fb01189e7620fb4eebe3ccd`
+SHA-256: `bcf7d263b5cc79497358ab00d93c3911096082b7569fea41c31d760ed38d40c8`
 
 Signing certificate SHA-256: `bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b23b599cabf0169`
 
@@ -16,6 +16,7 @@ Signing certificate SHA-256: `bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b
 - The Quick Settings tile is active only in the connected state; tapping it connects the last used profile or disconnects/cancels the current attempt.
 - The last used profile is persisted independently from the currently connected profile and migrated from the previous service preference.
 - The About screen shows the installed version, project repository, and support email.
+- The VPN service now runs in the foreground for the lifetime of an active connection, so removing the app from Recents does not tear down the tunnel.
 
 ## Automated verification
 
@@ -34,6 +35,7 @@ Tested on Xiaomi 24095PCADG, Android 16 (API 36), with `1.13.1-debug`:
 - The Quick Settings tile connected the last used profile, became active only after connection, and disconnected the tunnel on the next tap.
 - The active VPN exposed IPv4 and IPv6 addresses, IPv4 and IPv6 default routes, three VPN DNS servers, and UID allowlist ranges matching Telegram and Termux.
 - With Wi-Fi removed and a reachable mobile network that could not reach the VPN gateway, the 10-second reconnect watchdog expired exactly after 10 seconds and transitioned the UI to `DISCONNECTED`. The Quick Settings tile became inactive immediately; Android retained its system VPN indicator only while the TUN interface was held for the configured recovery window.
+- Removing the app from Recents left the same process, foreground VPN service, TUN interface, validated Android VPN network, addresses, DNS configuration, and Telegram/Termux UID allowlist intact. Reopening the GUI attached to the existing connection without reconnecting and showed `CONNECTED`.
 
 The bounded reconnect timeout is verified. Android 6 verification remains pending.
 

@@ -29,6 +29,7 @@ package net.openconnect_vpn.android.core;
 import android.Manifest.permission;
 import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -88,7 +89,8 @@ public class OpenVpnService extends VpnService {
 	private UserDialog mDialog;
 	private Context mDialogContext;
 
-	private final int NOTIFICATION_ID = 1;
+	private static final int NOTIFICATION_ID = 1;
+	private static final String NOTIFICATION_CHANNEL_ID = "vpn_connection";
 	private int mActivityConnections;
 	private boolean mNotificationActive;
 	private boolean mStopRequested;
@@ -144,10 +146,12 @@ public class OpenVpnService extends VpnService {
 
 		mVPNLog.restoreFromFile(getCacheDir().getAbsolutePath() + "/logdata.ser");
 		mConnectionStateNames = getResources().getStringArray(R.array.connection_states);
+		createNotificationChannel();
 	}
 
 	@Override
 	public void onDestroy() {
+		stopForeground(true);
 		killVPNThread(true);
 		unregisterReceivers();
 		mVPNLog.saveToFile(getCacheDir().getAbsolutePath() + "/logdata.ser");
@@ -291,6 +295,7 @@ public class OpenVpnService extends VpnService {
 
 		unregisterReceivers();
         mVPN = new OpenConnectManagementThread(getApplicationContext(), profile, this);
+		updateNotification();
 		registerDeviceStateReceiver(mVPN);
         mVPNThread = new Thread(mVPN, "OpenVPNManagementThread");
         mVPNThread.start();
@@ -365,24 +370,51 @@ public class OpenVpnService extends VpnService {
 		mDialog = dialog;
 	}
 
+	private void createNotificationChannel() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			NotificationChannel channel = new NotificationChannel(
+					NOTIFICATION_CHANNEL_ID, getString(R.string.notification_channel_vpn),
+					NotificationManager.IMPORTANCE_LOW);
+			NotificationManager manager = (NotificationManager)
+					getSystemService(Context.NOTIFICATION_SERVICE);
+			manager.createNotificationChannel(channel);
+		}
+	}
+
 	@SuppressWarnings("deprecation")
+	private Notification buildNotification() {
+		Notification.Builder builder;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			builder = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID);
+		} else {
+			builder = new Notification.Builder(this);
+		}
+
+		if (mDialog != null && mActivityConnections == 0) {
+			builder.setContentTitle(getString(R.string.notification_input_needed))
+					.setContentText(getString(R.string.notification_touch_here));
+		} else {
+			String profileName = profile == null ? getString(R.string.app) : profile.getName();
+			builder.setContentTitle(getString(R.string.app))
+					.setContentText(getString(R.string.notification_vpn_active,
+							profileName, getConnectionStateName()));
+		}
+
+		return builder.setSmallIcon(R.drawable.ic_stat_vpn)
+				.setContentIntent(getMainActivityIntent())
+				.setOngoing(true)
+				.setOnlyAlertOnce(true)
+				.setCategory(Notification.CATEGORY_SERVICE)
+				.build();
+	}
+
 	private void updateNotification() {
-		if (mDialog != null && mActivityConnections == 0 && !mNotificationActive) {
+		if (mVPN != null) {
+			startForeground(NOTIFICATION_ID, buildNotification());
 			mNotificationActive = true;
-
-			Notification.Builder builder = new Notification.Builder(this)
-		            .setSmallIcon(R.drawable.ic_stat_vpn)
-		            .setContentTitle(getString(R.string.notification_input_needed))
-		            .setContentText(getString(R.string.notification_touch_here))
-		            .setContentIntent(getMainActivityIntent());
-
-            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.notify(NOTIFICATION_ID, builder.getNotification());
-            mNotificationActive = true;
-		} else if ((mDialog == null || mActivityConnections > 0) && mNotificationActive) {
-            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.cancel(NOTIFICATION_ID);
-            mNotificationActive = false;
+		} else if (mNotificationActive) {
+			stopForeground(true);
+			mNotificationActive = false;
 		}
 	}
 

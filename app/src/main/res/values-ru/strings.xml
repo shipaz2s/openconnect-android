@@ -76,6 +76,8 @@
   <string name="not_required">Не требуется</string>
   <string name="notification_input_needed">Требуется ввод пользователя</string>
   <string name="notification_touch_here">Нажмите здесь чтобы перейти к OpenConnect</string>
+  <string name="notification_channel_vpn">VPN-соединение</string>
+  <string name="notification_vpn_active">%1$s — %2$s</string>
   <string name="private_key">Приватный ключ</string>
   <string name="profile_label">Профиль:</string>
   <string name="profile_name">Имя профиля</string>

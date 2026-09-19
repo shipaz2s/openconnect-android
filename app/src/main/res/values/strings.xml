@@ -83,6 +83,8 @@
     <string name="send_minidump_summary">Sends debugging information about last crash to developer</string>
     <string name="notification_input_needed">User input needed</string>
     <string name="notification_touch_here">Touch here to jump to OpenConnect</string>
+    <string name="notification_channel_vpn">VPN connection</string>
+    <string name="notification_vpn_active">%1$s — %2$s</string>
     <string name="state_connected_to">Connected to %1$s</string>
     <string name="error_connection_failed">Connection failed</string>
     <string name="error_invalid_hostname">Invalid hostname \'%1$s\'</string>
