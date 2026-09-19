@@ -63,6 +63,7 @@
   <string name="local_ip6">Локальный IPv6:</string>
   <string name="log">Лог</string>
   <string name="menu_add_profile">Добавить конфигурацию</string>
+  <string name="menu_import_profile">Импортировать конфигурацию</string>
   <string name="netchange">Переподключение при изменении сети</string>
   <string name="netchange_summary">Включение этого параметра заставит переподключиться, если состояние сети изменения (WIFI с мобильного)</string>
   <string name="netstatus">Статус сети:</string>

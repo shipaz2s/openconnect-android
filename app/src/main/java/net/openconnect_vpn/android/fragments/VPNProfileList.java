@@ -26,19 +26,29 @@
 
 package net.openconnect_vpn.android.fragments;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashSet;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Html.ImageGetter;
@@ -56,7 +66,11 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import net.openconnect_vpn.android.ConnectionEditorActivity;
+import net.openconnect_vpn.android.OcProfile;
+import net.openconnect_vpn.android.OcProfileParser;
 import net.openconnect_vpn.android.R;
 import net.openconnect_vpn.android.VpnProfile;
 import net.openconnect_vpn.android.api.GrantPermissionsActivity;
@@ -69,6 +83,8 @@ import net.openconnect_vpn.android.core.VPNConnector;
 public class VPNProfileList extends ListFragment {
 
 	private static final int MENU_ADD_PROFILE = 1;
+	private static final int MENU_IMPORT_PROFILE = 2;
+	private static final int REQUEST_IMPORT_PROFILE = 1001;
 	private boolean mIsTv;
 
 	private ArrayAdapter<VpnProfile> mArrayadapter;
@@ -237,6 +253,10 @@ public class VPNProfileList extends ListFragment {
 			.setAlphabeticShortcut('a')
 			.setTitleCondensed(getActivity().getString(R.string.add))
 			.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		menu.add(Menu.NONE, MENU_IMPORT_PROFILE, Menu.NONE, R.string.menu_import_profile)
+			.setIcon(android.R.drawable.ic_menu_upload)
+			.setAlphabeticShortcut('i')
+			.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		mDropdown = new CommonMenu(getActivity(), menu, false);
 	}
 
@@ -245,6 +265,9 @@ public class VPNProfileList extends ListFragment {
 		final int itemId = item.getItemId();
 		if (itemId == MENU_ADD_PROFILE) {
 			onAddProfileClicked("");
+			return true;
+		} else if (itemId == MENU_IMPORT_PROFILE) {
+			onImportProfileClicked();
 			return true;
 		} else if (mDropdown.onOptionsItemSelected(item)) {
 			return true;
@@ -335,6 +358,184 @@ public class VPNProfileList extends ListFragment {
 			});
 		}
 
+	}
+
+	private void onImportProfileClicked() {
+		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+		intent.setType("*/*");
+
+		startActivityForResult(intent, REQUEST_IMPORT_PROFILE);
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		if (requestCode != REQUEST_IMPORT_PROFILE)
+				return;
+
+		if (resultCode != Activity.RESULT_OK || data == null)
+				return;
+
+		Uri uri = data.getData();
+		if (uri == null)
+				return;
+
+		importProfile(uri);
+	}
+
+	private void importProfile(Uri uri) {
+		String fileName = getFileName(uri);
+
+		if (fileName == null || !fileName.toLowerCase().endsWith(".ocprof")) {
+			Toast.makeText(
+				getActivity(),
+				"Please select an .ocprof file",
+				Toast.LENGTH_LONG
+			).show();
+			return;
+		}
+
+		try {
+			String content = readTextFile(uri);
+
+			OcProfile imported = OcProfileParser.parse(content);
+			VpnProfile profile = importParsedProfile(imported);
+
+			mArrayadapter.add(profile);
+			mArrayadapter.sort(new VpnProfileNameComperator());
+			mArrayadapter.notifyDataSetChanged();
+
+			Toast.makeText(
+					getActivity(),
+					"Profile imported successfully",
+					Toast.LENGTH_LONG
+			).show();
+
+		} catch (Exception e) {
+			Toast.makeText(
+				getActivity(),
+				"Failed to read profile: " + e.getMessage(),
+				Toast.LENGTH_LONG
+			).show();
+		}
+	}
+
+	private String readTextFile(Uri uri) throws IOException {
+		InputStream input = getActivity()
+			.getContentResolver()
+			.openInputStream(uri);
+
+		if (input == null)
+			throw new IOException("Unable to open file");
+
+		try {
+			BufferedReader reader =
+				new BufferedReader(new InputStreamReader(input, "UTF-8"));
+
+			StringBuilder result = new StringBuilder();
+			String line;
+
+			while ((line = reader.readLine()) != null) {
+				result.append(line).append('\n');
+			}
+
+			return result.toString();
+
+		} finally {
+			input.close();
+		}
+	}
+
+	private String getFileName(Uri uri) {
+		Cursor cursor = null;
+
+		try {
+			cursor = getActivity()
+					.getContentResolver()
+					.query(uri, null, null, null, null);
+
+			if (cursor != null && cursor.moveToFirst()) {
+				int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+
+				if (index >= 0)
+					return cursor.getString(index);
+				}
+		} finally {
+			if (cursor != null)
+				cursor.close();
+		}
+
+		return uri.getLastPathSegment();
+	}
+
+	private VpnProfile importParsedProfile(OcProfile imported) throws Exception {
+
+		String serverAddress = imported.address;
+		serverAddress += ":" + imported.port;
+		serverAddress += "/?" + imported.codeWord;
+
+		String profileSourceName =
+				imported.name != null && !imported.name.isEmpty()
+						? imported.name
+						: imported.address;
+
+		VpnProfile profile = ProfileManager.create(profileSourceName);
+		copyAppRoutingFromLastProfile(profile);
+
+		String caFile = ProfileManager.storeFilePref(
+				profile,
+				"ca_certificate",
+				imported.caCertificate);
+
+		String certFile = ProfileManager.storeFilePref(
+				profile,
+				"user_certificate",
+				imported.certificate);
+
+		String keyFile = ProfileManager.storeFilePref(
+				profile,
+				"private_key",
+				imported.privateKey);
+
+		if (caFile == null || certFile == null || keyFile == null) {
+			ProfileManager.delete(profile.getUUIDString());
+			throw new Exception("Failed to store certificates");
+		}
+
+		SharedPreferences.Editor editor = profile.mPrefs.edit();
+
+		editor.putString("server_address", serverAddress);
+		editor.putString("ca_certificate", caFile);
+		editor.putString("user_certificate", certFile);
+		editor.putString("private_key", keyFile);
+
+		if (imported.codeWord != null)
+			editor.putString("code_word", imported.codeWord);
+
+		editor.apply();
+
+		return profile;
+	}
+
+	private void copyAppRoutingFromLastProfile(VpnProfile newProfile) {
+		VpnProfile lastProfile = ProfileManager.getLastUsedVpnProfile();
+
+		if (lastProfile == null)
+			return;
+
+		SharedPreferences.Editor editor = newProfile.mPrefs.edit();
+
+		editor.putBoolean(
+				VpnProfile.PREF_APP_ROUTING_ALLOWLIST_ENABLED,
+				lastProfile.isAppRoutingAllowlistEnabled());
+
+		editor.putStringSet(
+				VpnProfile.PREF_APP_ROUTING_PACKAGES,
+				new HashSet<String>(lastProfile.getAppRoutingPackages()));
+
+		editor.apply();
 	}
 
 	private void editVPN(VpnProfile profile) {

@@ -85,7 +85,7 @@ public class ProfileManager {
 	}
 
 	public synchronized static Collection<VpnProfile> getProfiles() {
-		init(mContext);
+		// init(mContext); // no sense only harm in this place
 		return mProfiles.values();
 	}
 
@@ -222,7 +222,9 @@ public class ProfileManager {
 			byte buffer[] = new byte[65536];
 
 			int len = in.read(buffer);
-			out.write(buffer, 0, len);
+			while ((len = in.read(buffer)) != -1) {
+				out.write(buffer, 0, len);
+			}
 
 			in.close();
 			out.close();
@@ -235,6 +237,35 @@ public class ProfileManager {
 			try {
 				new File(toPath).delete();
 			} catch (Exception ee) {
+			}
+
+			return null;
+		}
+	}
+
+	public synchronized static String storeFilePref(
+			VpnProfile profile, String key, String data) {
+
+		String filename = getCertFilename(profile, key);
+		String toPath = getCertPath() + filename;
+
+		try {
+			File outFile = new File(toPath);
+			FileOutputStream out = new FileOutputStream(outFile);
+
+			out.write(data.getBytes("UTF-8"));
+			out.close();
+
+			outFile.setExecutable(true);
+
+			return filename;
+
+		} catch (Exception e) {
+			Log.e(TAG, "error storing " + key + " -> " + toPath, e);
+
+			try {
+				new File(toPath).delete();
+			} catch (Exception ignored) {
 			}
 
 			return null;
