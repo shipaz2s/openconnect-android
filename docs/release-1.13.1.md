@@ -25,6 +25,16 @@ Signing certificate SHA-256: `bab37b82816ee0ba4f1ea2d0290175af61d8c069da3233654b
 - Android lint: passed (`lint`).
 - Signed release unit tests, assembly, lint, and APK signature verification: passed (`scripts/build-release.sh`).
 
+## Android 16 device verification
+
+Tested on Xiaomi 24095PCADG, Android 16 (API 36), with `1.13.1-debug`:
+
+- The existing debug installation was upgraded in place and retained its profiles.
+- Repeated cancellation during `CONNECTING` and immediately after `CONNECTED` returned to `DISCONNECTED`; the VPN thread terminated and Android reported no active VPN network for the debug package.
+- The Quick Settings tile connected the last used profile, became active only after connection, and disconnected the tunnel on the next tap.
+
+The bounded reconnect timeout still requires a controlled test with an available underlying network and an unreachable VPN gateway. Android 6 verification remains pending.
+
 ## Required device verification
 
 - Android 6 and a current targetSdk-level Android version.
