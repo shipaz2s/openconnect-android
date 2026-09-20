@@ -2465,10 +2465,12 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	vpn_progress(vpninfo, PRG_INFO, _("SSL negotiation with %s\n"),
 		     vpninfo->hostname);
 
-#ifdef GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT
-	gnutls_handshake_set_timeout(vpninfo->https_sess,
-				     GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
-#endif
+	/*
+	 * Do not let GnuTLS poll the TLS socket internally for the handshake
+	 * timeout. Its internal poll does not include OpenConnect's command fd,
+	 * which makes OC_CMD_CANCEL wait until the handshake times out. The
+	 * timeout is enforced in cstp_handshake(), where both fds are monitored.
+	 */
 #ifdef HAVE_HPKE_SUPPORT
 	/*
 	 * The AnyConnect STRAP protocol needs the Finished message from the
@@ -2495,6 +2497,10 @@ int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
 {
 	int err;
 	int ssl_sock = -1;
+#ifdef GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT
+	time_t deadline = time(NULL) +
+		(GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT + 999) / 1000;
+#endif
 
 	ssl_sock = (intptr_t)gnutls_transport_get_ptr(vpninfo->https_sess);
 
@@ -2502,6 +2508,22 @@ int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
 		if (err == GNUTLS_E_AGAIN || err == GNUTLS_E_INTERRUPTED) {
 			fd_set rd_set, wr_set;
 			int maxfd = ssl_sock;
+			int select_ret;
+#ifdef GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT
+			struct timeval timeout;
+			time_t remaining = deadline - time(NULL);
+
+			if (remaining <= 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("SSL connection failure: The operation timed out\n"));
+				gnutls_deinit(vpninfo->https_sess);
+				vpninfo->https_sess = NULL;
+				closesocket(ssl_sock);
+				return -ETIMEDOUT;
+			}
+			timeout.tv_sec = remaining;
+			timeout.tv_usec = 0;
+#endif
 
 			FD_ZERO(&rd_set);
 			FD_ZERO(&wr_set);
@@ -2512,11 +2534,27 @@ int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
 				FD_SET(ssl_sock, &rd_set);
 
 			cmd_fd_set(vpninfo, &rd_set, &maxfd);
-			while (select(maxfd + 1, &rd_set, &wr_set, NULL, NULL) < 0) {
+			select_ret = select(maxfd + 1, &rd_set, &wr_set, NULL,
+#ifdef GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT
+					    &timeout
+#else
+					    NULL
+#endif
+					    );
+			if (select_ret < 0) {
 				if (errno != EINTR) {
 					vpn_perror(vpninfo, _("Failed select() for TLS"));
 					return -EIO;
 				}
+				continue;
+			}
+			if (!select_ret) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("SSL connection failure: The operation timed out\n"));
+				gnutls_deinit(vpninfo->https_sess);
+				vpninfo->https_sess = NULL;
+				closesocket(ssl_sock);
+				return -ETIMEDOUT;
 			}
 			if (is_cancel_pending(vpninfo, &rd_set)) {
 				vpn_progress(vpninfo, PRG_ERR, _("SSL connection cancelled\n"));
