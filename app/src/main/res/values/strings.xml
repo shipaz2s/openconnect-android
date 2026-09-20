@@ -47,6 +47,9 @@
     <string name="reconnect">Reconnect</string>
     <string name="reconnect_to">Reconnect to %1$s</string>
     <string name="clear_log">Clear log</string>
+    <string name="share_log">Share log</string>
+    <string name="share_log_chooser">Share VPN log via</string>
+    <string name="share_log_subject">OpenConnect VPN log</string>
     <string name="remove_vpn">Remove VPN</string>
     <string name="remove_vpn_query">Remove the VPN Profile \'%s\'?</string>
     <string name="clear">Clear</string>

@@ -21,6 +21,9 @@
   <string name="choose_existing_vpn">Выберите профиль который будет исползоваться с этим токеном, или создайте новый:</string>
   <string name="clear">Очистить</string>
   <string name="clear_log">Очистить журнал</string>
+  <string name="share_log">Поделиться журналом</string>
+  <string name="share_log_chooser">Отправить журнал VPN через</string>
+  <string name="share_log_subject">Журнал OpenConnect VPN</string>
   <string name="clear_saved_passwords">Удалить сохраненные пароли</string>
   <string name="clear_saved_passwords_confirm">Вы точно хотите удалить все сохраненные данные?</string>
   <string name="clear_token">Очистить токен</string>
