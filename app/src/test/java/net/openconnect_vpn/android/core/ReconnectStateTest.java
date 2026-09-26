@@ -46,9 +46,15 @@ public class ReconnectStateTest {
     }
 
     @Test
-    public void detectsEspDeadPeerMessage() {
-        assertTrue(OpenConnectManagementThread.isDeadPeerMessage(
+    public void ignoresEspDeadPeerMessage() {
+        assertFalse(OpenConnectManagementThread.isDeadPeerMessage(
                 "ESP detected dead peer\n"));
+    }
+
+    @Test
+    public void ignoresDtlsDeadPeerMessage() {
+        assertFalse(OpenConnectManagementThread.isDeadPeerMessage(
+                "DTLS Dead Peer Detection detected dead peer!\n"));
     }
 
     @Test

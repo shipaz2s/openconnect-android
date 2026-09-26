@@ -107,7 +107,11 @@ public class OpenConnectManagementThread implements Runnable, OpenVPNManagement 
     	return mPrefs.getBoolean(key, false);
     }
 	static boolean isDeadPeerMessage(String message) {
-		return message != null && message.toLowerCase(Locale.US).contains("detected dead peer");
+		if (message == null) {
+			return false;
+		}
+		String normalized = message.toLowerCase(Locale.US);
+		return normalized.contains("cstp") && normalized.contains("detected dead peer");
 	}
 
 
