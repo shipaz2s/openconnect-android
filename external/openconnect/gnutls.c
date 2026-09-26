@@ -2498,8 +2498,9 @@ int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
 	int err;
 	int ssl_sock = -1;
 #ifdef GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT
-	time_t deadline = time(NULL) +
-		(GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT + 999) / 1000;
+	/* Match GnuTLS' "reasonable default" without treating its UINT_MAX
+	 * sentinel as an actual millisecond duration. */
+	time_t deadline = time(NULL) + 40;
 #endif
 
 	ssl_sock = (intptr_t)gnutls_transport_get_ptr(vpninfo->https_sess);
